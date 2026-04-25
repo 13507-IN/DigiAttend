@@ -1,0 +1,26 @@
+{
+  "name": "digiattend",
+  "version": "1.0.0",
+  "description": "DigiAttend BLE-Based Attendance System",
+  "private": true,
+  "scripts": {
+    "dev:mobile": "cd mobile && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "npm run dev:mobile & npm run dev:backend",
+    "build:mobile": "cd mobile && npx expo prebuild --clean",
+    "build:android": "cd mobile && eas build -p android --profile development",
+    "db:generate": "cd backend && npm run db:generate",
+    "db:push": "cd backend && npm run db:push"
+  },
+  "keywords": ["attendance", "ble", "react-native", "expo"],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/13507-IN/DigiAttend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/13507-IN/DigiAttend/issues"
+  },
+  "homepage": "https://github.com/13507-IN/DigiAttend#readme"
+}
