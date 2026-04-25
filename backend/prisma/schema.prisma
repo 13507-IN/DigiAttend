@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  name         String
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  courses      Course[]      @relation("UserCourses")
+  attendance  Attendance[]
+  sessions    Session[]    @relation("TeacherSessions")
+}
+
+model Course {
+  id         String       @id @default(uuid())
+  name       String
+  code       String       @unique
+  schedule   String
+  location   String?
+  teacherId  String
+  teacher    User         @relation("UserCourses", fields: [teacherId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  
+  sessions   Session[]
+  students   CourseStudent[]
+}
+
+model CourseStudent {
+  id        String   @id @default(uuid())
+  courseId  String
+  studentId String
+  course    Course  @relation(fields: [courseId], references: [id])
+  student   User    @relation(fields: [studentId], references: [id])
+  
+  @@unique([courseId, studentId])
+}
+
+model Session {
+  id        String       @id @default(uuid())
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id])
+  teacherId String
+  teacher  User         @relation("TeacherSessions", fields: [teacherId], references: [id])
+  startTime DateTime     @default(now())
+  endTime   DateTime?
+  isActive  Boolean      @default(true)
+  beaconId String?
+  createdAt DateTime     @default(now())
+  
+  attendance Attendance[]
+}
+
+model Attendance {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  sessionId String
+  session  Session   @relation(fields: [sessionId], references: [id])
+  timestamp DateTime   @default(now())
+  status    Status     @default(PRESENT)
+  deviceId  String?
+  
+  @@unique([userId, sessionId])
+}
+
+enum Role {
+  TEACHER
+  STUDENT
+}
+
+enum Status {
+  PRESENT
+  ABSENT
+  LATE
+}
