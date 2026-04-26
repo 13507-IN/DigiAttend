@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { bleService } from '../services/ble';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList, BLEDevice } from '../types';
 
 type StudentHomeProps = {
@@ -40,6 +41,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({ navigation }) => {
     { id: '1', name: 'Computer Science 101', code: 'CS101', schedule: 'Mon/Wed 10:00 AM' },
     { id: '2', name: 'Data Structures', code: 'CS201', schedule: 'Tue/Thu 2:00 PM' },
   ]);
+  const { logout, user } = useAuth();
 
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
 
@@ -138,8 +140,21 @@ export const StudentHome: React.FC<StudentHomeProps> = ({ navigation }) => {
     );
   };
 
-  const handleLogout = () => {
-    navigation.replace('Login');
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -148,7 +163,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({ navigation }) => {
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Student Home</Text>
-            <Text style={styles.subtitle}>Find and mark attendance</Text>
+            <Text style={styles.subtitle}>{user?.name}</Text>
           </View>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Text style={styles.logoutText}>Logout</Text>

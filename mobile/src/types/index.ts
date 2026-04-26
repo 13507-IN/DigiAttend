@@ -3,8 +3,8 @@ export interface User {
   email: string;
   name: string;
   role: 'teacher' | 'student';
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
@@ -15,6 +15,11 @@ export interface AuthResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export interface RegisterCredentials extends LoginCredentials {
+  name: string;
+  role?: 'teacher' | 'student';
 }
 
 export interface AttendanceRecord {
@@ -55,6 +60,7 @@ export interface AttendanceSession {
 
 export type RootStackParamList = {
   Login: undefined;
+  Register: undefined;
   TeacherDashboard: undefined;
   StudentHome: undefined;
 };

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { bleService } from '../services/ble';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList, BLEDevice } from '../types';
 
 type TeacherDashboardProps = {
@@ -34,6 +35,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ navigation }
     { id: '2', name: 'Data Structures', code: 'CS201', schedule: 'Tue/Thu 2:00 PM', studentCount: 30 },
     { id: '3', name: 'Algorithms', code: 'CS301', schedule: 'Mon/Wed 3:00 PM', studentCount: 20 },
   ]);
+  const { logout, user } = useAuth();
 
   useEffect(() => {
     return () => {
@@ -90,15 +92,31 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ navigation }
     Alert.alert('Session Ended', 'Attendance session has ended');
   };
 
-  const handleLogout = () => {
-    navigation.replace('Login');
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <Text style={styles.title}>Teacher Dashboard</Text>
+          <View>
+            <Text style={styles.title}>Teacher Dashboard</Text>
+            <Text style={styles.subtitle}>{user?.name}</Text>
+          </View>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
