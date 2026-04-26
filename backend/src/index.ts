@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { config } from './config';
-import apiRoutes from './routes/api';
-import indexRoutes from './routes';
+import { config } from './config/index.js';
+import apiRoutes from './routes/api.js';
+import indexRoutes from './routes/index.js';
 
 const app = express();
 
@@ -15,8 +15,9 @@ app.use('/', indexRoutes);
 app.use('/api', apiRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
+  res.status(500).json({ message: err.message || 'Something went wrong!' });
 });
 
 const PORT = config.port;
