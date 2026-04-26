@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { apiService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types';
 
 type LoginScreenProps = {
@@ -23,35 +23,38 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const { login } = useAuth();
+
+  const validate = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
-      const response = await apiService.login({ email, password });
-      apiService.setToken(response.token);
-      
-      if (response.user.role === 'teacher') {
-        navigation.replace('TeacherDashboard');
-      } else {
-        navigation.replace('StudentHome');
-      }
+      await login(email.trim().toLowerCase(), password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
+      const message = error.response?.data?.message || 'Invalid credentials';
+      Alert.alert('Login Failed', message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = (role: 'teacher' | 'student') => {
-    if (role === 'teacher') {
-      navigation.replace('TeacherDashboard');
-    } else {
-      navigation.replace('StudentHome');
     }
   };
 
@@ -68,24 +71,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           </View>
 
           <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={[styles.input, errors.email && styles.inputError]}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={[styles.input, errors.password && styles.inputError]}
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
+
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleLogin}
@@ -99,22 +111,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.demoSection}>
-            <Text style={styles.demoText}>Quick Demo Access:</Text>
-            <View style={styles.demoButtons}>
-              <TouchableOpacity
-                style={[styles.demoButton, styles.teacherButton]}
-                onPress={() => handleDemoLogin('teacher')}
-              >
-                <Text style={styles.demoButtonText}>Teacher Demo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.demoButton, styles.studentButton]}
-                onPress={() => handleDemoLogin('student')}
-              >
-                <Text style={styles.demoButtonText}>Student Demo</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.linkText}>Register</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -152,20 +153,37 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: 24,
   },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    marginBottom: 16,
     backgroundColor: '#f9f9f9',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
   },
   button: {
     backgroundColor: '#1a1a1a',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 8,
   },
   buttonDisabled: {
     backgroundColor: '#999',
@@ -175,34 +193,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  demoSection: {
-    marginTop: 24,
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  demoButtons: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
   },
-  demoButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  teacherButton: {
-    backgroundColor: '#2563eb',
-  },
-  studentButton: {
-    backgroundColor: '#059669',
-  },
-  demoButtonText: {
-    color: '#fff',
+  footerText: {
     fontSize: 14,
+    color: '#666',
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#1a1a1a',
     fontWeight: '600',
   },
 });
