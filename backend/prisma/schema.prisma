@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,12 +13,14 @@ model User {
   password     String
   name         String
   role         Role          @default(STUDENT)
-  createdAt    DateTime      @default(now())
+  deviceId     String?
+  createdAt   DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   
   courses      Course[]      @relation("UserCourses")
   attendance  Attendance[]
-  sessions    Session[]    @relation("TeacherSessions")
+  sessions    Session[]      @relation("TeacherSessions")
+  enrollments CourseStudent[] @relation("StudentEnrollments")
 }
 
 model Course {
@@ -42,7 +43,7 @@ model CourseStudent {
   courseId  String
   studentId String
   course    Course  @relation(fields: [courseId], references: [id])
-  student   User    @relation(fields: [studentId], references: [id])
+  student   User    @relation("StudentEnrollments", fields: [studentId], references: [id])
   
   @@unique([courseId, studentId])
 }
