@@ -1,9 +1,13 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import SensitiveInfo from 'react-native-sensitive-info';
 import { API_BASE_URL } from '../config/environment';
-import { AuthResponse, LoginCredentials, User, AttendanceRecord, Course } from '../types';
+import { AuthResponse, LoginCredentials, User, AttendanceRecord, Course, RegisterCredentials } from '../types';
+
+const TOKEN_KEY = 'digiattend_auth_token';
 
 class ApiService {
   private client: AxiosInstance;
+  private token: string | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -16,7 +20,7 @@ class ApiService {
 
     this.client.interceptors.request.use(
       (config) => {
-        const token = this.getToken();
+        const token = this.getTokenSync();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -36,19 +40,48 @@ class ApiService {
     );
   }
 
-  private getToken(): string | null {
-    return null;
+  private getTokenSync(): string | null {
+    return this.token;
   }
 
-  private clearToken(): void {
+  async getToken(): Promise<string | null> {
+    if (this.token) return this.token;
+    try {
+      const token = await SensitiveInfo.getItem(TOKEN_KEY, {});
+      this.token = token;
+      return token;
+    } catch {
+      return null;
+    }
   }
 
-  setToken(token: string): void {
-    this.client.defaults.headers.common.Authorization = `Bearer ${token}`;
+  async setToken(token: string): Promise<void> {
+    this.token = token;
+    await SensitiveInfo.setItem(TOKEN_KEY, token, {
+      keychainService: 'com.digiattend.app',
+    });
+  }
+
+  async clearToken(): Promise<void> {
+    this.token = null;
+    await SensitiveInfo.deleteItem(TOKEN_KEY, {});
+  }
+
+  setTokenDirect(token: string): void {
+    this.token = token;
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await this.client.post<AuthResponse>('/auth/login', credentials);
+    const { token, user } = response.data;
+    await this.setToken(token);
+    return response.data;
+  }
+
+  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+    const response = await this.client.post<AuthResponse>('/auth/register', credentials);
+    const { token, user } = response.data;
+    await this.setToken(token);
     return response.data;
   }
 
