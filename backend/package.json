@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "DigiAttend BLE Attendance System Backend",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
@@ -12,11 +13,15 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
   },
-  "keywords": ["attendance", "ble", "education"],
+  "keywords": [
+    "attendance",
+    "ble",
+    "education"
+  ],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "dependencies": {
+"dependencies": {
+    "@prisma/adapter-pg": "^1.0.0",
     "@prisma/client": "^7.8.0",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
@@ -35,10 +40,12 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.6.0",
+    "@types/pg": "^8.11.0",
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.14",
     "prisma": "^7.8.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }
