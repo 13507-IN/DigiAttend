@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import prisma from '../db/prisma';
+import prisma from '../db/prisma.js';
 
 export const attendanceController = {
   async recordAttendance(req: Request, res: Response) {
