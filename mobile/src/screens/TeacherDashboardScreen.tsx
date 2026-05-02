@@ -44,6 +44,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ navigation }
   }, []);
 
   const handleStartScanning = async () => {
+    const hasPermissions = await bleService.requestPermissions();
+    if (!hasPermissions) {
+      Alert.alert('Permission Required', 'Bluetooth and location permissions are required for BLE scanning');
+      return;
+    }
+
+    const isEnabled = await bleService.checkBluetoothEnabled();
+    if (!isEnabled) {
+      Alert.alert('Bluetooth Required', 'Please enable Bluetooth to scan for devices');
+      return;
+    }
+
     setDevices([]);
     setIsScanning(true);
     

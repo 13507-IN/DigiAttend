@@ -4,7 +4,7 @@ export const BLE_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 export const BLE_DEVICE_NAME = 'DigiAttend-Beacon';
 export const SCAN_TIMEOUT = 15000;
 export const BLE_MANAGER_OPTIONS = {
-  restoreIdentifierIdentifier: 'com.digiattend.app.blemanager',
+  restoreStateIdentifier: 'com.digiattend.app.blemanager',
   forceBleTransport: undefined,
 };
 export const ENV = {

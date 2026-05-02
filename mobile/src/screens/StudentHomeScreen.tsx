@@ -92,20 +92,22 @@ export const StudentHome: React.FC<StudentHomeProps> = ({ navigation }) => {
 
     setIsScanning(true);
     setNearbySessions([]);
-
-    let scanComplete = false;
+    let devicesFound = 0;
 
     bleService.startScanning(
       (device: BLEDevice) => {
-        if (!scanComplete) {
-          const session: NearbySession = {
-            id: device.id,
-            courseName: 'Active Attendance Session',
-            teacherName: 'Prof. Smith',
-            timestamp: new Date().toISOString(),
-          };
-          setNearbySessions((prev) => [...prev, session]);
-        }
+        devicesFound++;
+        const session: NearbySession = {
+          id: device.id,
+          courseName: device.name || 'Active Attendance Session',
+          teacherName: 'Scanning Beacons...',
+          timestamp: new Date().toISOString(),
+        };
+        setNearbySessions((prev) => {
+          const exists = prev.find(s => s.id === device.id);
+          if (exists) return prev;
+          return [...prev, session];
+        });
       },
       (error: Error) => {
         Alert.alert('Scan Error', error.message);
@@ -116,8 +118,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({ navigation }) => {
     setTimeout(() => {
       bleService.stopScanning();
       setIsScanning(false);
-      scanComplete = true;
-      if (nearbySessions.length === 0) {
+      if (devicesFound === 0) {
         Alert.alert('No Sessions', 'No attendance sessions found nearby');
       }
     }, 15000);
