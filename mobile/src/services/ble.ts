@@ -1,4 +1,3 @@
-import { BleManager, Device, Characteristic } from 'react-native-ble-plx';
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
 import {
   BLE_SERVICE_UUID,
@@ -9,20 +8,48 @@ import {
 } from '../config/environment';
 import { BLEDevice } from '../types';
 
+let BleManager: any = null;
+let Device: any = null;
+let Characteristic: any = null;
+
+// Only import BLE packages on native platforms
+if (Platform.OS !== 'web') {
+  try {
+    const ble = require('react-native-ble-plx');
+    BleManager = ble.BleManager;
+    Device = ble.Device;
+    Characteristic = ble.Characteristic;
+  } catch (error) {
+    console.warn('BLE packages not available:', error);
+  }
+}
+
 class BLEService {
-  private bleManager: BleManager;
+  private bleManager: any = null;
   private isScanning: boolean = false;
   private scannedDevices: Map<string, BLEDevice> = new Map();
+  private isWebPlatform: boolean = Platform.OS === 'web';
 
   constructor() {
-    this.bleManager = new BleManager(BLE_MANAGER_OPTIONS);
+    if (!this.isWebPlatform && BleManager) {
+      this.bleManager = new BleManager(BLE_MANAGER_OPTIONS);
+    }
   }
 
-  getManager(): BleManager {
+  getManager(): any {
+    if (this.isWebPlatform) {
+      console.warn('BLE Manager is not available on web platform');
+      return null;
+    }
     return this.bleManager;
   }
 
   async requestPermissions(): Promise<boolean> {
+    // Web platform doesn't require BLE permissions
+    if (this.isWebPlatform) {
+      return true;
+    }
+
     if (Platform.OS === 'android') {
       const androidVersion = Platform.Version;
       if (androidVersion >= 31) {
@@ -51,6 +78,13 @@ class BLEService {
   }
 
   async checkBluetoothEnabled(): Promise<boolean> {
+    // On web, we can't check Bluetooth status
+    if (this.isWebPlatform) {
+      return true; // Assume it's available on web
+    }
+
+    if (!this.bleManager) return false;
+
     try {
       const state = await this.bleManager.state();
       return state === 'PoweredOn';
@@ -60,33 +94,17 @@ class BLEService {
     }
   }
 
-  async startScanning(
+  startScanning(
     onDeviceFound: (device: BLEDevice) => void,
     onError?: (error: Error) => void
-  ): Promise<void> {
-    if (this.isScanning) {
+  ): void {
+    // On web, don't actually scan but allow the UI to proceed
+    if (this.isWebPlatform) {
+      console.info('BLE scanning not available on web platform');
       return;
     }
 
-    const hasPermissions = await this.requestPermissions();
-    if (!hasPermissions) {
-      Alert.alert(
-        'Permission Required',
-        'Bluetooth and location permissions are required to scan for devices.'
-      );
-      onError?.(new Error('Permission denied'));
-      return;
-    }
-
-    const isEnabled = await this.checkBluetoothEnabled();
-    if (!isEnabled) {
-      Alert.alert(
-        'Bluetooth Required',
-        'Please enable Bluetooth to scan for attendance beacons.'
-      );
-      onError?.(new Error('Bluetooth is not enabled'));
-      return;
-    }
+    if (this.isScanning || !this.bleManager) return;
 
     this.isScanning = true;
     this.scannedDevices.clear();
@@ -96,7 +114,7 @@ class BLEService {
     this.bleManager.startDeviceScan(
       filterServiceUUIDs,
       { allowDuplicates: false },
-      (error, device) => {
+      (error: any, device: any) => {
         if (error) {
           console.error('BLE Scan Error:', error);
           onError?.(new Error(error.message));
@@ -109,11 +127,12 @@ class BLEService {
             id: device.id,
             name: device.name || 'Unknown Device',
             rssi: device.rssi || 0,
-            isConnectable: device.isConnectable || false,
-            serviceUUIDs: device.serviceUUIDs || [],
+            services: [],
           };
-          this.scannedDevices.set(device.id, bleDevice);
-          onDeviceFound(bleDevice);
+          if (!this.scannedDevices.has(device.id)) {
+            this.scannedDevices.set(device.id, bleDevice);
+            onDeviceFound(bleDevice);
+          }
         }
       }
     );
@@ -124,13 +143,18 @@ class BLEService {
   }
 
   stopScanning(): void {
-    if (this.isScanning) {
+    if (this.isScanning && !this.isWebPlatform && this.bleManager) {
       this.bleManager.stopDeviceScan();
-      this.isScanning = false;
     }
+    this.isScanning = false;
   }
 
-  async connectToDevice(deviceId: string): Promise<Device | null> {
+  async connectToDevice(deviceId: string): Promise<any | null> {
+    if (this.isWebPlatform || !this.bleManager) {
+      console.warn('BLE connection not available on web platform');
+      return null;
+    }
+
     try {
       const device = await this.bleManager.connectToDevice(deviceId, {
         timeout: 10000,
@@ -144,6 +168,10 @@ class BLEService {
   }
 
   async disconnectDevice(deviceId: string): Promise<void> {
+    if (this.isWebPlatform || !this.bleManager) {
+      return;
+    }
+
     try {
       const device = await this.bleManager.devices([deviceId]);
       if (device.length > 0) {
@@ -155,10 +183,14 @@ class BLEService {
   }
 
   async readCharacteristic(
-    device: Device,
+    device: any,
     serviceUUID: string,
     characteristicUUID: string
   ): Promise<string | null> {
+    if (this.isWebPlatform || !device) {
+      return null;
+    }
+
     try {
       const services = await device.services();
       for (const service of services) {
@@ -180,11 +212,15 @@ class BLEService {
   }
 
   async writeCharacteristic(
-    device: Device,
+    device: any,
     serviceUUID: string,
     characteristicUUID: string,
     value: string
   ): Promise<boolean> {
+    if (this.isWebPlatform || !device) {
+      return false;
+    }
+
     try {
       const services = await device.services();
       for (const service of services) {
@@ -206,12 +242,16 @@ class BLEService {
   }
 
   async monitorCharacteristic(
-    device: Device,
+    device: any,
     serviceUUID: string,
     characteristicUUID: string,
     onData: (data: string) => void,
     onError?: (error: Error) => void
   ): Promise<void> {
+    if (this.isWebPlatform || !device) {
+      return;
+    }
+
     try {
       const services = await device.services();
       for (const service of services) {
@@ -219,7 +259,7 @@ class BLEService {
           const characteristics = await service.characteristics();
           for (const char of characteristics) {
             if (char.uuid === characteristicUUID) {
-              char.monitor((error, characteristic) => {
+              char.monitor((error: any, characteristic: any) => {
                 if (error) {
                   onError?.(new Error(error.message));
                 } else if (characteristic?.value) {
@@ -238,7 +278,9 @@ class BLEService {
 
   destroy(): void {
     this.stopScanning();
-    this.bleManager.destroy();
+    if (!this.isWebPlatform && this.bleManager) {
+      this.bleManager.destroy();
+    }
   }
 }
 

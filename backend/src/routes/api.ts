@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
+import { authController } from '../controllers/authController.js';
 import { attendanceController } from '../controllers/attendanceController.js';
 import { courseController } from '../controllers/courseController.js';
 
@@ -8,6 +9,9 @@ const router = Router();
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+router.post('/auth/register', authController.register);
+router.post('/auth/login', authController.login);
 
 router.use(authenticate);
 

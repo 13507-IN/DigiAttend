@@ -1,13 +1,24 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import SensitiveInfo from 'react-native-sensitive-info';
+import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config/environment';
 import { AuthResponse, LoginCredentials, User, AttendanceRecord, Course, RegisterCredentials } from '../types';
 
 const TOKEN_KEY = 'digiattend_auth_token';
+let SensitiveInfo: any = null;
+
+// Conditionally import SensitiveInfo only for native platforms
+if (Platform.OS !== 'web') {
+  try {
+    SensitiveInfo = require('react-native-sensitive-info').default;
+  } catch (e) {
+    console.warn('SensitiveInfo not available, using fallback storage');
+  }
+}
 
 class ApiService {
   private client: AxiosInstance;
   private token: string | null = null;
+  private isWeb: boolean = Platform.OS === 'web';
 
   constructor() {
     this.client = axios.create({
@@ -41,30 +52,71 @@ class ApiService {
   }
 
   private getTokenSync(): string | null {
+    if (this.token) return this.token;
+    
+    if (this.isWeb) {
+      try {
+        return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+      } catch {
+        return null;
+      }
+    }
+    
     return this.token;
   }
 
   async getToken(): Promise<string | null> {
     if (this.token) return this.token;
+    
     try {
-      const token = await SensitiveInfo.getItem(TOKEN_KEY, {});
-      this.token = token;
-      return token;
-    } catch {
-      return null;
+      if (this.isWeb) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+        this.token = token;
+        return token;
+      } else if (SensitiveInfo) {
+        const token = await SensitiveInfo.getItem(TOKEN_KEY, {});
+        this.token = token;
+        return token;
+      }
+    } catch (error) {
+      console.warn('Error retrieving token:', error);
     }
+    
+    return null;
   }
 
   async setToken(token: string): Promise<void> {
     this.token = token;
-    await SensitiveInfo.setItem(TOKEN_KEY, token, {
-      keychainService: 'com.digiattend.app',
-    });
+    
+    try {
+      if (this.isWeb) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(TOKEN_KEY, token);
+        }
+      } else if (SensitiveInfo) {
+        await SensitiveInfo.setItem(TOKEN_KEY, token, {
+          keychainService: 'com.digiattend.app',
+        });
+      }
+    } catch (error) {
+      console.warn('Error setting token:', error);
+    }
   }
 
   async clearToken(): Promise<void> {
     this.token = null;
-    await SensitiveInfo.deleteItem(TOKEN_KEY, {});
+    
+    try {
+      if (this.isWeb) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(TOKEN_KEY);
+        }
+      } else if (SensitiveInfo) {
+        await SensitiveInfo.deleteItem(TOKEN_KEY, {});
+      }
+    } catch (error) {
+      console.warn('Error clearing token:', error);
+    }
   }
 
   setTokenDirect(token: string): void {
