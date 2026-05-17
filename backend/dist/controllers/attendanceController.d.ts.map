@@ -1,0 +1,1 @@
+{"version":3,"file":"attendanceController.d.ts","sourceRoot":"","sources":["../../src/controllers/attendanceController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAG5C,eAAO,MAAM,oBAAoB;0BACH,OAAO,OAAO,QAAQ;+BAsBjB,OAAO,OAAO,QAAQ;8BAkBvB,OAAO,OAAO,QAAQ;CAevD,CAAC"}
