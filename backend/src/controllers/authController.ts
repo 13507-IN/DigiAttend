@@ -99,7 +99,7 @@ export const authController = {
           email, 
           password: hashedPassword, 
           name, 
-          role: role === 'TEACHER' ? 'TEACHER' : 'STUDENT' 
+          role: (role === 'TEACHER' || role === 'teacher') ? 'TEACHER' : 'STUDENT' 
         },
       });
 
@@ -139,6 +139,15 @@ export const authController = {
       });
     } catch (error) {
       console.error('Get me error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
+
+  async logout(req: Request, res: Response) {
+    try {
+      res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+      console.error('Logout error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   },

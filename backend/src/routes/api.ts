@@ -15,6 +15,9 @@ router.post('/auth/login', authController.login);
 
 router.use(authenticate);
 
+router.get('/auth/me', authController.getMe);
+router.post('/auth/logout', authController.logout);
+
 router.post('/attendance', attendanceController.recordAttendance);
 router.get('/attendance/course/:courseId', attendanceController.getAttendanceByCourse);
 router.get('/attendance/my', attendanceController.getStudentAttendance);
