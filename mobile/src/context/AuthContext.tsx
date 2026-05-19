@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    await apiService.clearToken();
+    await apiService.logout();
     setUser(null);
   };
 
