@@ -23,13 +23,22 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-const AppStack = () => (
+const TeacherStack = () => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
     }}
   >
     <Stack.Screen name="TeacherDashboard" component={TeacherDashboardScreen} />
+  </Stack.Navigator>
+);
+
+const StudentStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
     <Stack.Screen name="StudentHome" component={StudentHomeScreen} />
   </Stack.Navigator>
 );
@@ -47,7 +56,11 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AppStack /> : <AuthStack />}
+      {isAuthenticated ? (
+        user?.role === 'teacher' ? <TeacherStack /> : <StudentStack />
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 };
