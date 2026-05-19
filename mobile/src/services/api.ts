@@ -119,6 +119,16 @@ class ApiService {
     }
   }
 
+  async logout(): Promise<void> {
+    try {
+      await this.client.post('/auth/logout');
+    } catch (error) {
+      console.warn('Backend logout failed or was offline:', error);
+    } finally {
+      await this.clearToken();
+    }
+  }
+
   setTokenDirect(token: string): void {
     this.token = token;
   }
