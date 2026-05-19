@@ -98,16 +98,34 @@ class BLEService {
     onDeviceFound: (device: BLEDevice) => void,
     onError?: (error: Error) => void
   ): void {
-    // On web, don't actually scan but allow the UI to proceed
+    if (this.isScanning) return;
+    this.isScanning = true;
+    this.scannedDevices.clear();
+
+    // On web, simulate scanning for a mock beacon device
     if (this.isWebPlatform) {
-      console.info('BLE scanning not available on web platform');
+      console.info('BLE scanning simulated on web platform');
+      setTimeout(() => {
+        if (this.isScanning) {
+          const mockDevice: any = {
+            id: 'mock-beacon-id-123',
+            name: BLE_DEVICE_NAME,
+            rssi: -58,
+            isConnectable: true,
+            serviceUUIDs: [BLE_SERVICE_UUID],
+            services: [BLE_SERVICE_UUID],
+          };
+          this.scannedDevices.set(mockDevice.id, mockDevice);
+          onDeviceFound(mockDevice);
+        }
+      }, 1500); // discover a mock device after 1.5 seconds
       return;
     }
 
-    if (this.isScanning || !this.bleManager) return;
-
-    this.isScanning = true;
-    this.scannedDevices.clear();
+    if (!this.bleManager) {
+      this.isScanning = false;
+      return;
+    }
 
     const filterServiceUUIDs = [BLE_SERVICE_UUID];
 
