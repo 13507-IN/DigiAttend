@@ -245,6 +245,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
   logoutButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,

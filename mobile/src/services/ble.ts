@@ -64,8 +64,6 @@ class BLEService {
         );
       } else {
         const permissions = [
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADMIN,
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         ];
         const granted = await PermissionsAndroid.requestMultiple(permissions);
@@ -113,7 +111,6 @@ class BLEService {
             rssi: -58,
             isConnectable: true,
             serviceUUIDs: [BLE_SERVICE_UUID],
-            services: [BLE_SERVICE_UUID],
           };
           this.scannedDevices.set(mockDevice.id, mockDevice);
           onDeviceFound(mockDevice);
@@ -145,7 +142,8 @@ class BLEService {
             id: device.id,
             name: device.name || 'Unknown Device',
             rssi: device.rssi || 0,
-            services: [],
+            isConnectable: device.isConnectable || false,
+            serviceUUIDs: device.serviceUUIDs || [],
           };
           if (!this.scannedDevices.has(device.id)) {
             this.scannedDevices.set(device.id, bleDevice);

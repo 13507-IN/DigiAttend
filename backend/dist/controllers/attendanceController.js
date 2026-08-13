@@ -1,16 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.attendanceController = void 0;
-const prisma_js_1 = __importDefault(require("../db/prisma.js"));
-exports.attendanceController = {
+import prisma from '../db/prisma.js';
+export const attendanceController = {
     async recordAttendance(req, res) {
         try {
             const authReq = req;
             const { sessionId, deviceId } = req.body;
-            const attendance = await prisma_js_1.default.attendance.create({
+            const attendance = await prisma.attendance.create({
                 data: {
                     userId: authReq.user.id,
                     sessionId,
@@ -28,8 +22,8 @@ exports.attendanceController = {
     },
     async getAttendanceByCourse(req, res) {
         try {
-            const { courseId } = req.params;
-            const session = await prisma_js_1.default.session.findFirst({
+            const courseId = req.params.courseId;
+            const session = await prisma.session.findFirst({
                 where: { courseId, isActive: true },
                 include: {
                     attendance: { include: { user: { select: { id: true, name: true, email: true } } } },
@@ -45,7 +39,7 @@ exports.attendanceController = {
     async getStudentAttendance(req, res) {
         try {
             const authReq = req;
-            const attendance = await prisma_js_1.default.attendance.findMany({
+            const attendance = await prisma.attendance.findMany({
                 where: { userId: authReq.user.id },
                 include: { session: { include: { course: true } } },
             });

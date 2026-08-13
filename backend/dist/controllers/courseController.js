@@ -1,15 +1,9 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.courseController = void 0;
-const prisma_js_1 = __importDefault(require("../db/prisma.js"));
-exports.courseController = {
+import prisma from '../db/prisma.js';
+export const courseController = {
     async getTeacherCourses(req, res) {
         try {
             const authReq = req;
-            const courses = await prisma_js_1.default.course.findMany({
+            const courses = await prisma.course.findMany({
                 where: { teacherId: authReq.user.id },
                 include: { _count: { select: { students: true } } },
             });
@@ -23,7 +17,7 @@ exports.courseController = {
     async getStudentCourses(req, res) {
         try {
             const authReq = req;
-            const courses = await prisma_js_1.default.courseStudent.findMany({
+            const courses = await prisma.courseStudent.findMany({
                 where: { studentId: authReq.user.id },
                 include: { course: true },
             });
@@ -38,7 +32,7 @@ exports.courseController = {
         try {
             const authReq = req;
             const { name, code, schedule, location } = req.body;
-            const course = await prisma_js_1.default.course.create({
+            const course = await prisma.course.create({
                 data: { name, code, schedule, location, teacherId: authReq.user.id },
             });
             res.status(201).json(course);

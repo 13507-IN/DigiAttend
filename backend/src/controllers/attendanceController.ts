@@ -26,7 +26,7 @@ export const attendanceController = {
 
   async getAttendanceByCourse(req: Request, res: Response) {
     try {
-      const { courseId } = req.params;
+      const courseId = req.params.courseId as string;
 
       const session = await prisma.session.findFirst({
         where: { courseId, isActive: true },

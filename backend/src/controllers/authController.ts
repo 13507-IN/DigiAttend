@@ -8,7 +8,7 @@ interface RegisterBody {
   email: string;
   password: string;
   name: string;
-  role?: 'TEACHER' | 'STUDENT';
+  role?: string;
 }
 
 interface LoginBody {
@@ -126,6 +126,9 @@ export const authController = {
   async getMe(req: Request, res: Response) {
     try {
       const authReq = req as AuthRequest;
+      if (!authReq.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const user = await prisma.user.findUnique({
         where: { id: authReq.user.id },
         select: { id: true, email: true, name: true, role: true, createdAt: true },

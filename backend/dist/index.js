@@ -1,20 +1,15 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const morgan_1 = __importDefault(require("morgan"));
-const index_js_1 = require("./config/index.js");
-const api_js_1 = __importDefault(require("./routes/api.js"));
-const index_js_2 = __importDefault(require("./routes/index.js"));
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-app.use((0, morgan_1.default)('dev'));
-app.use('/', index_js_2.default);
-app.use('/api', api_js_1.default);
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import { config } from './config/index.js';
+import apiRoutes from './routes/api.js';
+import indexRoutes from './routes/index.js';
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+app.use('/', indexRoutes);
+app.use('/api', apiRoutes);
 app.use((err, req, res, next) => {
     console.error('Error:', err.message);
     console.error('Stack:', err.stack);
@@ -24,7 +19,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
-const PORT = index_js_1.config.port;
+const PORT = config.port;
 const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
@@ -38,5 +33,5 @@ process.on('uncaughtException', (error) => {
     // Gracefully shutdown after logging the error
     process.exit(1);
 });
-exports.default = app;
+export default app;
 //# sourceMappingURL=index.js.map
