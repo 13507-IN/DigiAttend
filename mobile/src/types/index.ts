@@ -25,10 +25,30 @@ export interface RegisterCredentials extends LoginCredentials {
 export interface AttendanceRecord {
   id: string;
   userId: string;
-  courseId: string;
+  sessionId: string;
+  courseId?: string;
   timestamp: string;
-  status: 'present' | 'absent' | 'late';
+  status: 'PRESENT' | 'ABSENT' | 'LATE';
   deviceId?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  session?: {
+    id: string;
+    courseId: string;
+    startTime: string;
+    course?: {
+      id: string;
+      name: string;
+      code: string;
+    };
+    teacher?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface Course {
@@ -39,6 +59,16 @@ export interface Course {
   schedule: string;
   location?: string;
   createdAt: string;
+  teacher?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+  _count?: {
+    students: number;
+    sessions?: number;
+  };
+  sessions?: AttendanceSession[];
 }
 
 export interface BLEDevice {
@@ -52,10 +82,21 @@ export interface BLEDevice {
 export interface AttendanceSession {
   id: string;
   courseId: string;
+  teacherId: string;
   startTime: string;
-  endTime: string;
+  endTime?: string | null;
   isActive: boolean;
   beaconId?: string;
+  course?: Course;
+  teacher?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  _count?: {
+    attendance: number;
+  };
+  attendance?: AttendanceRecord[];
 }
 
 export type RootStackParamList = {

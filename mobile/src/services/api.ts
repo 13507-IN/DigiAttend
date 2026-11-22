@@ -1,7 +1,15 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config/environment';
-import { AuthResponse, LoginCredentials, User, AttendanceRecord, Course, RegisterCredentials } from '../types';
+import {
+  AuthResponse,
+  LoginCredentials,
+  User,
+  AttendanceRecord,
+  Course,
+  RegisterCredentials,
+  AttendanceSession,
+} from '../types';
 
 const TOKEN_KEY = 'digiattend_auth_token';
 let SensitiveInfo: any = null;
@@ -53,7 +61,7 @@ class ApiService {
 
   private getTokenSync(): string | null {
     if (this.token) return this.token;
-    
+
     if (this.isWeb) {
       try {
         return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
@@ -61,13 +69,13 @@ class ApiService {
         return null;
       }
     }
-    
+
     return this.token;
   }
 
   async getToken(): Promise<string | null> {
     if (this.token) return this.token;
-    
+
     try {
       if (this.isWeb) {
         const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
@@ -81,13 +89,13 @@ class ApiService {
     } catch (error) {
       console.warn('Error retrieving token:', error);
     }
-    
+
     return null;
   }
 
   async setToken(token: string): Promise<void> {
     this.token = token;
-    
+
     try {
       if (this.isWeb) {
         if (typeof window !== 'undefined') {
@@ -105,7 +113,7 @@ class ApiService {
 
   async clearToken(): Promise<void> {
     this.token = null;
-    
+
     try {
       if (this.isWeb) {
         if (typeof window !== 'undefined') {
@@ -135,20 +143,26 @@ class ApiService {
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await this.client.post<AuthResponse>('/auth/login', credentials);
-    const { token, user } = response.data;
+    const { token } = response.data;
     await this.setToken(token);
     return response.data;
   }
 
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
     const response = await this.client.post<AuthResponse>('/auth/register', credentials);
-    const { token, user } = response.data;
+    const { token } = response.data;
     await this.setToken(token);
     return response.data;
   }
 
   async getCurrentUser(): Promise<User> {
     const response = await this.client.get<User>('/auth/me');
+    return response.data;
+  }
+
+  // Course methods
+  async getAllCourses(): Promise<Course[]> {
+    const response = await this.client.get<Course[]>('/courses');
     return response.data;
   }
 
@@ -162,13 +176,50 @@ class ApiService {
     return response.data;
   }
 
-  async recordAttendance(record: Partial<AttendanceRecord>): Promise<AttendanceRecord> {
-    const response = await this.client.post<AttendanceRecord>('/attendance', record);
+  async createCourse(data: { name: string; code: string; schedule: string; location?: string }): Promise<Course> {
+    const response = await this.client.post<Course>('/courses', data);
     return response.data;
   }
 
-  async getAttendanceByCourse(courseId: string): Promise<AttendanceRecord[]> {
-    const response = await this.client.get<AttendanceRecord[]>(`/attendance/course/${courseId}`);
+  async enrollInCourse(courseId: string): Promise<any> {
+    const response = await this.client.post('/courses/enroll', { courseId });
+    return response.data;
+  }
+
+  // Session methods
+  async startSession(courseId: string, beaconId?: string): Promise<AttendanceSession> {
+    const response = await this.client.post<AttendanceSession>('/sessions/start', { courseId, beaconId });
+    return response.data;
+  }
+
+  async stopSession(sessionId: string): Promise<AttendanceSession> {
+    const response = await this.client.post<AttendanceSession>(`/sessions/${sessionId}/stop`);
+    return response.data;
+  }
+
+  async getActiveSessions(): Promise<AttendanceSession[]> {
+    const response = await this.client.get<AttendanceSession[]>('/sessions/active');
+    return response.data;
+  }
+
+  async getSessionAttendance(sessionId: string): Promise<AttendanceSession> {
+    const response = await this.client.get<AttendanceSession>(`/sessions/${sessionId}/attendance`);
+    return response.data;
+  }
+
+  // Attendance methods
+  async recordAttendance(data: { sessionId: string; deviceId?: string }): Promise<any> {
+    const response = await this.client.post('/attendance', data);
+    return response.data;
+  }
+
+  async getAttendanceByCourse(courseId: string): Promise<any[]> {
+    const response = await this.client.get<any[]>(`/attendance/course/${courseId}`);
+    return response.data;
+  }
+
+  async getMyAttendance(): Promise<{ totalAttended: number; records: AttendanceRecord[] }> {
+    const response = await this.client.get<{ totalAttended: number; records: AttendanceRecord[] }>('/attendance/my');
     return response.data;
   }
 }

@@ -66,12 +66,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
     setLoading(true);
     try {
       await register(name.trim(), email.trim().toLowerCase(), password, role);
-
-      if (role === 'teacher') {
-        navigation.replace('TeacherDashboard');
-      } else {
-        navigation.replace('StudentHome');
-      }
+      // AuthContext will automatically switch to TeacherStack or StudentStack
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';
       Alert.alert('Error', message);
